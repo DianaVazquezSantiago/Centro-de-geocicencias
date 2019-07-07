@@ -1,0 +1,50 @@
+Import time
+from sense_hat import SenseHat
+from datetime import datetime
+from time import sleep
+sense = SenseHat()
+sense.set_imu_config(False, False, True)
+sense.set_pixel(0, 0, 0, 255, 0) #waiting for event
+event = sense.stick.wait_for_event()
+sleep(0.1)
+
+sense.set_pixel(0, 0, 0, 0, 255)#event detected
+
+sense.stick.wait_for_event(emptybuffer=True)
+
+j= True
+bandera = 1
+while j== True:
+    start = time.time()
+    led = time.time()
+    f= open("acelerometro.txt","a")
+    while (time.time()-start<8):
+        raw = sense.get_accelerometer_raw()
+        f.write(datetime.now().strftime("%Y-%m-%d %H:%M:%S:%f")[:-3])
+        f.write(" x: {x:.10f}, y: {y:.10f}, z: {z:.10f}\r\n".format(**raw))
+        HB = time.time()-led
+        if (HB>=4):
+            if (bandera == 1):
+                sense.set_pixel(0, 0, 255, 0, 255)
+                led = time.time()
+                bandera = 0
+            elif (bandera == 0):
+                sense.set_pixel(0, 0, 0, 0, 0)
+                led = time.time()
+                bandera = 1
+    f.close()
+    temp = sense.get_temperature_from_humidity()
+    humidity = sense.get_humidity()
+    pressure = sense.get_pressure()   
+    d= open("medidas.txt","a")
+    d.write(datetime.now().strftime("%Y-%m-%d %H:%M:%S:%f")[:-3])
+    d.write(" Humedad: {:.2f}, Temperatura: {:.2f}, Presion: {:.2f}\r\n".format( humidity, temp, pressure))
+    d.close()
+    print("temp done")
+    for event in sense.stick.get_events():
+        
+        if event.timestamp != 0:
+            sense.set_pixel(0, 0, 255, 0, 0) #done
+            j= False
+        
+print("end")
